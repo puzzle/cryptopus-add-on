@@ -1,0 +1,29 @@
+{
+  "manifest_version" : 2,
+  "name": "Cryptopus",
+  "version": "0.0.1",
+
+  "description": "Cryptopus Add-On",
+
+  "icons" : {
+    "48": "icons/crypticon_48.png",
+    "96": "icons/crypticon_96.png"
+  },
+
+  "permissions": [
+    "*://localhost/*",
+    "webRequest",
+    "activeTab",
+    "tabs"
+  ],
+
+  "browser_action": {
+    "default_icon": "icons/crypticon_48.png",
+    "default_title": "Cryptopus",
+    "default_popup": "login_popup/login.html"
+  },
+
+  "background":   {
+    "scripts": ["background.js", "lib/jquery-3.3.1.js"]
+  }
+}

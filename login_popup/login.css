@@ -1,0 +1,23 @@
+body {
+  margin: 5px;
+  width: 200px;
+}
+
+.hidden{
+  display: none;
+}
+
+#username, #userpassword{
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+#login{
+  float: right;
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+
+#select-api-user{
+  margin: 0px, 0px, 0px;
+}
