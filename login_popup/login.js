@@ -30,8 +30,7 @@ function connectApi(){
   if(validateInput()){
     var username = $('#username').val().trim();
     var password = $('#password').val().trim();
-    console.log(username + ' : ' + password);
-    listApiUsers(username, password);
+    listApiUsers(host, username, password);
   }
 }
 
@@ -53,15 +52,14 @@ function validate(elem) {
   return true;
 }
 
-function listApiUsers(username, password) {
+function listApiUsers(hostUrl, username, password) {
   $.ajax({
-    url: host + '/api/api_users',
+    url: hostUrl + '/api/api_users',
     headers: headers(username, password),
     statusCode: {
       200: function(response) {
         var apiUsers = response['data']['user/apis'];
         if(apiUsers.length != 0) {
-          debugger
           if(apiUsers.length == 1){
             setAndRenewApiUser(apiUsers[0].id, username, password)
           } else {
