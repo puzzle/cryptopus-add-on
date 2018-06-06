@@ -1,4 +1,4 @@
-var host = "http://localhost:3000";
+var HOST = "http://localhost:3000";
 var ENTER = 13;
 var UP = 38;
 var DOWN = 40;
@@ -28,9 +28,7 @@ $(document).keydown((e) => {
 
 function connectApi(){
   if(validateInput()){
-    var username = $('#username').val().trim();
-    var password = $('#password').val().trim();
-    listApiUsers(host, username, password);
+    listApiUsers();
   }
 }
 
@@ -52,22 +50,14 @@ function validate(elem) {
   return true;
 }
 
-function listApiUsers(hostUrl, username, password) {
+function listApiUsers() {
   $.ajax({
-    url: hostUrl + '/api/api_users',
-    headers: headers(username, password),
+    url: HOST + '/api/api_users',
+    headers: headers(),
     statusCode: {
       200: function(response) {
         var apiUsers = response['data']['user/apis'];
-        if(apiUsers.length != 0) {
-          if(apiUsers.length == 1){
-            setAndRenewApiUser(apiUsers[0].id, username, password)
-          } else {
-            apiUserSelect(apiUsers);
-          }
-        } else {
-          noApiUsers();
-        }
+        selectApiUser(apiUsers);
       },
       401: function() { badCredentials(); },
       500: function() { serverError(); }
@@ -76,10 +66,60 @@ function listApiUsers(hostUrl, username, password) {
   });
 }
 
-function apiUserSelect(apiUsers){
+function selectApiUser(apiUsers){
+  if(apiUsers.length != 0) {
+    if(apiUsers.length == 1){
+      setAndRenewApiUser(apiUsers[0].id);
+    } else {
+      selectionList(apiUsers);
+    }
+  } else {
+    noApiUsers();
+  }
+}
+
+function selectionList(apiUsers){
   showApiUserSelectionList(apiUsers);
   setSelectionOnHover();
   setSelectionOnClick();
+}
+
+
+function submitSelection(){
+  var elem = $('#select-api-user').find('li.active');
+
+  if(elem.length != 0){
+    var id = elem.val();
+    setAndRenewApiUser(id);
+  }
+}
+
+function setAndRenewApiUser(id){
+  $.ajax({
+    url: HOST + '/api/api_users/' + id + '/token',
+    headers: headers(),
+    success: function(response) {
+      var api = response['data']['user/api'];
+      var token = response['messages']['info'][0].split(':')[1].trim();
+
+      browser.runtime.sendMessage({'user':api, 'token':token});
+      window.close();
+    },
+    type: 'GET'
+  });
+}
+
+function headers(){
+  return {
+      'Authorization-User': credentials()[0],
+      'Authorization-Password': btoa(credentials()[1])
+  };
+}
+
+function credentials(){
+  var username = $('#username').val().trim();
+  var password = $('#password').val().trim();
+  return [ username, password ]
 }
 
 function badCredentials(){
@@ -94,7 +134,7 @@ function noApiUsers(){
   $('#no-api-users').append(
     $('<a>', {
       type: 'text',
-      href: host + "/en/profile",
+      href: HOST + "/en/profile",
       text: 'Profile page'
     }));
   $('#login-form').addClass('hidden');
@@ -151,33 +191,4 @@ function keepInBounds(i){
   } else {
     return i;
   }
-}
-
-function submitSelection(){
-  var username = $('#username').val().trim();
-  var password = $('#password').val().trim();
-  var id = $('#select-api-user').find('li.active').val();
-  setAndRenewApiUser(id, username, password)
-}
-
-function setAndRenewApiUser(id, username, password){
-  $.ajax({
-    url: host + '/api/api_users/' + id + '/token',
-    headers: headers(username, password),
-    success: function(response) {
-      var api = response['data']['user/api'];
-      var token = response['messages']['info'][0].split(':')[1].trim();
-
-      browser.runtime.sendMessage({'user':api, 'token':token});
-      window.close();
-    },
-    type: 'GET'
-  });
-}
-
-function headers(username, password){
-  return {
-      'Authorization-User': username,
-      'Authorization-Password': btoa(password)
-  };
 }
