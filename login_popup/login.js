@@ -9,6 +9,7 @@ $('#login').click((e) => {
 
 $(document).keydown((e) => {
   if(!$('#login-form').hasClass('hidden') && e.which == ENTER){
+    $('.alert-danger').addClass('hidden');
     connectApi();
   } else if (!$('#select-api-user').hasClass('hidden')){
     switch(e.which){
@@ -59,9 +60,10 @@ function listApiUsers(username, password) {
     statusCode: {
       200: function(response) {
         var apiUsers = response['data']['user/apis'];
-        if(apiUsers) {
+        if(apiUsers.length != 0) {
+          debugger
           if(apiUsers.length == 1){
-            setApiUser(apiUsers[0].id, username, password)
+            setAndRenewApiUser(apiUsers[0].id, username, password)
           } else {
             apiUserSelect(apiUsers);
           }
@@ -69,20 +71,65 @@ function listApiUsers(username, password) {
           noApiUsers();
         }
       },
-      401: function() { badCredentials() },
-      500: function() { serverError() }
+      401: function() { badCredentials(); },
+      500: function() { serverError(); }
     },
     type: 'GET'
   });
 }
 
 function apiUserSelect(apiUsers){
+  showApiUserSelectionList(apiUsers);
+  setSelectionOnHover();
+  setSelectionOnClick();
+}
+
+function badCredentials(){
+  $('#bad-credentials').removeClass('hidden');
+}
+
+function serverError(){
+  $('#server-error').removeClass('hidden');
+}
+
+function noApiUsers(){
+  $('#no-api-users').append(
+    $('<a>', {
+      type: 'text',
+      href: host + "/en/profile",
+      text: 'Profile page'
+    }));
+  $('#login-form').addClass('hidden');
+  $('#no-api-users').removeClass('hidden');
+}
+
+function showApiUserSelectionList(apiUsers){
   $('#login-form').addClass('hidden');
   $('#select-api-user').removeClass('hidden');
   apiUsers.forEach(function(api) {
     $('#api-user-list').append('<li class="list-group-item" value=' + api.id + '>' + api.username + '</li>');
   });
   $('#api-user-list').find('li').first().addClass('active');
+}
+
+function setSelectionOnHover() {
+  $('#api-user-list').find('li').hover(
+    function(){
+      var prevElem = $('#select-api-user').find('li.active');
+      if(prevElem.length != 0){
+        prevElem.removeClass('active');
+      }
+      $(this).addClass('active');
+    },
+    function(){
+      $(this).removeClass('active');
+    });
+}
+
+function setSelectionOnClick() {
+  $('#api-user-list').find('li').click(function () {
+    submitSelection();
+  });
 }
 
 function changeSelection(diff){
@@ -112,10 +159,10 @@ function submitSelection(){
   var username = $('#username').val().trim();
   var password = $('#password').val().trim();
   var id = $('#select-api-user').find('li.active').val();
-  setApiUser(id, username, password)
+  setAndRenewApiUser(id, username, password)
 }
 
-function setApiUser(id, username, password){
+function setAndRenewApiUser(id, username, password){
   $.ajax({
     url: host + '/api/api_users/' + id + '/token',
     headers: headers(username, password),
@@ -128,14 +175,6 @@ function setApiUser(id, username, password){
     },
     type: 'GET'
   });
-}
-
-function badCredentials(){
-  console.log('enter badCredentials');
-}
-
-function serverError(){
-  console.log('enter serverError');
 }
 
 function headers(username, password){
