@@ -39,6 +39,4 @@ Show Web-Ext Version.
 
 Run Web-Ext.
 
-``cd src/``
-
 ``web-ext run``
